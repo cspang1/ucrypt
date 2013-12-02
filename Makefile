@@ -22,6 +22,8 @@
   ucrypt: $(OBJS)
 	@$(CC) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	@rm -f *.o
+	@rm -f *.*~
+	@rm -f *~
 	@mkdir -p $(DECDIR)
 	@mkdir -p $(ENCDIR)
 	@mkdir -p $(RSADIR)  
