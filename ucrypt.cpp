@@ -12,7 +12,6 @@
  * License: Creative Commons Attribution-NonCommercial 4.0 International License 
  */
 
-// Includes
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -24,10 +23,8 @@
 #include "AEScrypt.h"
 #include "RSAcrypt.h"
 
-// Use standard namespace
 using namespace std;
 
-// Function forward declarations
 void dispHelp();
 int throwError(int e);
 vector<int> validKey(char * key);
@@ -35,37 +32,36 @@ bool genRSAkeys();
 bool keyCheck();
 void dispSpecs();
 
-// Instantiate AES and RSA key sizes in bytes
+// AES and RSA key sizes in bytes
 static const unsigned int AES_KEY_SIZE = 16/sizeof(char);
 static const unsigned int RSA_KEY_SIZE = 128/sizeof(char);
-// Instantiate RSA key containers
+// RSA key containers
 static const char* RSApubKey = new char[RSA_KEY_SIZE];
 static const char* RSAprvKey = new char[RSA_KEY_SIZE];
-// Instantiate RSA class
+// RSA class
 static RSAcrypt RSA;
 
-// Main function
 int main(int argc, char * argv[])
 {
-	// Instantiate SHA256 hash wrapper
+	// SHA256 hash wrapper
 	hashwrapper *hasher = new sha256wrapper();
-	// Instantiate key containers
+	// Key containers
 	string hash;
 	char* tempKey = new char[AES_KEY_SIZE];
 	char* key = new char[AES_KEY_SIZE];
 	char* RSAkey = new char[RSA_KEY_SIZE];
 	const char* encryptedKey = new char[RSA_KEY_SIZE];
-	// Instantiate directory and filename strings
+	// Directory and filename strings
 	string ddest = "Decrypted/";
 	string edest = "Encrypted/";
 	string path;
 	string keytxt = "Key.txt";
 	string keyPath(argv[argc-1]);
-	// Instantiate configuration vector
+	// Configuration vector
 	vector<int> config(2,0);
-	// Instantiate booleans for command line parameters
+	// Booleans for command line parameters
 	bool nrsa = false, sti = false, dec = false, rsa = false, del = false, dkey = false;
-	// Instantiate ints for dup and optget
+	// Ints for dup and optget
 	int opt = 0, devNull = open("/dev/null", O_WRONLY), stout = dup(1);
 	// Get command line parameters
 	while((opt = getopt(argc, argv, "nqhrsdxk")) != EOF)
@@ -113,10 +109,14 @@ int main(int argc, char * argv[])
 			break;
 		}
 	}
-	if(optind == argc)
+	if((optind == argc) && !(nrsa && !sti && !dec && !rsa && !del && !dkey))
 		return throwError(-9);
 	if(sti && (argc - optind > 1))
 		return throwError(-10);
+	// Generate new RSA keys
+	if(nrsa)
+		if(!genRSAkeys())
+			return throwError(-7);
 	// If RSA is being used, get public and private keys
 	if(dkey || rsa)
 	{
@@ -153,7 +153,10 @@ int main(int argc, char * argv[])
 	{
 		ifstream keyFile(keyPath);
 		if(!keyFile.is_open())
+		{
+			cerr << keyPath;
 			return throwError(-1);
+		}
 		keyFile.getline(RSAkey, 256);
 		tempKey = RSA.decrypt(RSAkey);
 		string temp(tempKey);
@@ -181,7 +184,7 @@ int main(int argc, char * argv[])
 			ifstream in(argv[x]);
 			if(!in.is_open())
 			{
-				cout << argv[x] << endl;
+				cerr << argv[x];
 				return throwError(-1);
 			}
 			in.close();
@@ -233,10 +236,6 @@ int main(int argc, char * argv[])
 		out << (unsigned char)result.at(ln);
 		out.close();
 	}
-	// Generate new RSA keys
-	if(nrsa)
-		if(!genRSAkeys())
-			return throwError(-7);
 	// RSA encrypt AES key
 	if(rsa)
 	{
@@ -334,7 +333,7 @@ int throwError(int e)
 	switch(e)
 	{
 		case -1:
-		cerr << "Error: File not found or is corrupted." << endl;
+		cerr << ": File not found or is corrupted." << endl;
 		break;
 		case -2:
 		cerr << "Error: Key length must be <= 16 bytes." << endl;

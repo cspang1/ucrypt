@@ -21,6 +21,7 @@
 
 class AESdata;
 
+// String-derived typedef for unsigned characters
 typedef std::basic_string<unsigned char> ustring;
 
 class AEScrypt

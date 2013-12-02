@@ -11,26 +11,40 @@
  *
  * License: Creative Commons Attribution-NonCommercial 4.0 International License
  */
+ 
 #include <string>
 #include <fstream>
 #include <vector>
 #include <iostream>
 #include "AEScrypt.h"
 
+ /*
+  * Class: AESdata
+  * 
+  * Purpose: Contains the private members of class AEScrypt
+  */
 class AESdata
 {
 	public:
+		// AES constants 
 		static const unsigned int AES_KEY_SIZE = 16/sizeof(char);
 		static const unsigned int BLOCK_SIZE = 128;
 		static const unsigned int WORD_SIZE = 4;
 		static const unsigned int SBOX_SIZE = 256;
 		static const unsigned int ROUND_KEYS = 44;
+		// Tracker variable for current round key
 		int roundKeyIndex;
+		// Key container
 		char* key = new char[AES_KEY_SIZE];
+		// Encryption/decryption result container
 		ustring result;
+		// Container for matrix mapped key 
 		unsigned char keyBlock[WORD_SIZE][WORD_SIZE];
+		// Container for current round state
 		unsigned char stateBlock[WORD_SIZE][WORD_SIZE];
+		// Container for expanded key
 		unsigned char roundKeys[WORD_SIZE][ROUND_KEYS];
+		// Lookup tables
 		const unsigned char sBox[SBOX_SIZE] =
 		{
 			0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -163,8 +177,7 @@ class AESdata
 			{13, 9, 14, 11},
 			{11, 13, 9, 14}
 		};
-		//AEScrypt& AEScrypt_;
-		//AESdata(AEScrypt& aparen);
+		// AES functions
 		void eProcess();
 		void dProcess();
 		void expandKey();
@@ -182,27 +195,55 @@ class AESdata
 		std::vector<unsigned char> getData(std::ifstream& in, std::streampos size);
 };
 
-//AESdata::AESdata(AEScrypt& aparen) : AEScrypt_(aparen){}
-
+ /*
+  * Constructor: AEScrypt(char* key)
+  * 
+  * Purpose: Generate AEScrypt object, setting the encryption key
+  * 
+  * Arguments: User-defined encryption key
+  */
 AEScrypt::AEScrypt(char* key)
 {
-	AES = new AESdata/*(*this)*/;
+	AES = new AESdata;
 	AES->key = key;
 	AES->roundKeyIndex = 0;
 	AES->popKeyBlock();
 	AES->expandKey();
 }
 
+ /*
+  * Constructor: AEScrypt()
+  * 
+  * Purpose: Generate blank AEScrypt object
+  * 
+  * Arguments: None
+  */
 AEScrypt::AEScrypt()
 {
-	AES = new AESdata/*(*this)*/;
+	AES = new AESdata;
 }
 
+ /*
+  * Destructor: ~AEScrypt()
+  * 
+  * Purpose: Deallocate AEScrypt and AESdata memory
+  * 
+  * Arguments: None
+  */
 AEScrypt::~AEScrypt()
 {
 	delete AES;
 }
 
+ /*
+  * Function: ustring AEScrypt::encrypt(std::ifstream& in)
+  * 
+  * Purpose: Populate string with data from infile for encryption
+  * 
+  * Arguments: std::ifstream& in = data infile stream
+  * 
+  * Returns: Result of data encryption
+  */
 ustring AEScrypt::encrypt(std::ifstream& in)
 {
 	std::string data;
@@ -212,6 +253,15 @@ ustring AEScrypt::encrypt(std::ifstream& in)
 	return encrypt(data);
 }
 
+ /*
+  * Function: ustring AEScrypt::encrypt(std::string in)
+  * 
+  * Purpose: Partition data and encrypt it
+  * 
+  * Arguments: std::string in = data to be encrypted
+  * 
+  * Returns: String containing results of encryption
+  */
 ustring AEScrypt::encrypt(std::string in)
 {
 	AES->result.clear();
@@ -232,7 +282,7 @@ ustring AEScrypt::encrypt(std::string in)
 		{
 			std::string data;
 			for(int i = 0; i < 16; i++, index++)
-				data += in[index];
+				data.push_back(in[index]);
 			AES->popStateBlock(data);
 			AES->eProcess();
 		}
@@ -241,9 +291,9 @@ ustring AEScrypt::encrypt(std::string in)
 		if(empty)
 		{
 			for(int x = 0; x < empty; x++, index++)
-				data += in[index];
+				data.push_back(in[index]);
 			for(int fill = 0; fill < 16 - empty; fill++)
-				data += (char)NULL;
+				data.push_back((char)NULL);
 			AES->popStateBlock(data);
 			AES->eProcess();
 		}
@@ -251,6 +301,15 @@ ustring AEScrypt::encrypt(std::string in)
 	return AES->result;
 }
 
+ /*
+  * Function: ustring AEScrypt::decrypt(std::ifstream& in)
+  * 
+  * Purpose: Populate ustring with data for decryption 
+  * 
+  * Arguments: std::ifstream& in = data infile stream
+  * 
+  * Returns: Results of decryption
+  */
 ustring AEScrypt::decrypt(std::ifstream& in)
 {
 	std::streampos size;
@@ -264,6 +323,15 @@ ustring AEScrypt::decrypt(std::ifstream& in)
 	return decrypt(final);
 }
 
+ /*
+  * Function: ustring AEScrypt::decrypt(ustring in)
+  * 
+  * Purpose: Partition data and decrypt
+  * 
+  * Arguments: ustring in = data to be decrypted
+  * 
+  * Returns: ustring containing results of decryption
+  */
 ustring AEScrypt::decrypt(ustring in)
 {
 	AES->result.clear();
@@ -303,11 +371,29 @@ ustring AEScrypt::decrypt(ustring in)
 	return AES->result;
 }
 
+ /*
+  * Function: std::string AEScrypt::getKey()
+  * 
+  * Purpose: Retrieve AES key
+  * 
+  * Arguments: None
+  * 
+  * Returns: A string containing the key
+  */
 std::string AEScrypt::getKey()
 {
 	return AES->key;
 }
 
+ /*
+  * Function: void AEScrypt::setKey(char* key)
+  * 
+  * Purpose: Set AES key and perform key expansion
+  * 
+  * Arguments: char* key = AES key
+  * 
+  * Returns: Nothing
+  */
 void AEScrypt::setKey(char* key)
 {
 	AES->key = key;
@@ -315,6 +401,15 @@ void AEScrypt::setKey(char* key)
 	AES->expandKey();
 }
 
+ /*
+  * Function: void AESdata::eProcess()
+  * 
+  * Purpose: Perform AES encryption steps
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::eProcess()
 {
 	roundKeyIndex = 0;
@@ -333,6 +428,15 @@ void AESdata::eProcess()
 	return;
 }
 
+ /*
+  * Function: void AESdata::dProcess()
+  * 
+  * Purpose: Perform AES decryption steps
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::dProcess()
 {
 	roundKeyIndex = 44;
@@ -352,6 +456,15 @@ void AESdata::dProcess()
 	return;
 }
 
+ /*
+  * Function: std::vector<unsigned char> AESdata::getData(std::ifstream& in, std::streampos size)
+  * 
+  * Purpose: Read data from infile and populate vector
+  * 
+  * Arguments: std::ifstream& in = data infile, std::streampos size = size of data infile
+  * 
+  * Returns: An unsigned char vector containing the infile data
+  */
 std::vector<unsigned char> AESdata::getData(std::ifstream& in, std::streampos size)
 {
 	std::vector<unsigned char> data(size);
@@ -359,6 +472,15 @@ std::vector<unsigned char> AESdata::getData(std::ifstream& in, std::streampos si
 	return data;
 }
 
+ /*
+  * Function: void AESdata::expandKey()
+  * 
+  * Purpose: Use Key Expansion algorithm to convert 4-word key to 44 words
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::expandKey()
 {
 	int index = WORD_SIZE;
@@ -388,6 +510,15 @@ void AESdata::expandKey()
 	return;
 }
 
+ /*
+  * Function: void AESdata::subBytes()
+  * 
+  * Purpose: Use S-Box lookup table to substitute state block bytes
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::subBytes()
 {
 	for(unsigned int x = 0; x < WORD_SIZE; x++)
@@ -396,6 +527,15 @@ void AESdata::subBytes()
 	return;
 }
 
+ /*
+  * Function: void AESdata::shiftRows()
+  * 
+  * Purpose: Shift each row of the state block left by the row number (index 0)
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::shiftRows()
 {
 	for(unsigned int y = 1; y < WORD_SIZE; y++)
@@ -412,6 +552,15 @@ void AESdata::shiftRows()
 	return;
 }
 
+ /*
+  * Function: void AESdata::mixColumns()
+  * 
+  * Purpose: Bitwise mix the columns of the state block
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::mixColumns()
 {
 	int mult = 0;
@@ -447,6 +596,15 @@ void AESdata::mixColumns()
 	return;
 }
 
+ /*
+  * Function: void AESdata::addRoundKey()
+  * 
+  * Purpose: Bitwise XOR round key with the state block
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::addRoundKey()
 {
 	int i = roundKeyIndex;
@@ -457,6 +615,15 @@ void AESdata::addRoundKey()
 	return;
 }
 
+ /*
+  * Function: void AESdata::invSubBytes()
+  * 
+  * Purpose: Use inverted S-Box to substitute the state block bytes
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::invSubBytes()
 {
 	for(unsigned int x = 0; x < WORD_SIZE; x++)
@@ -465,6 +632,15 @@ void AESdata::invSubBytes()
 	return;
 }
 
+ /*
+  * Function: void AESdata::invShiftRows()
+  * 
+  * Purpose: Shift rows of state block right by row number (index 0)
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::invShiftRows()
 {
 	for(unsigned int y = 1; y < WORD_SIZE; y++)
@@ -481,6 +657,15 @@ void AESdata::invShiftRows()
 	return;
 }
 
+ /*
+  * Function: void AESdata::invMixColumns()
+  * 
+  * Purpose: Inverted column mixing using Galois field lookup tables
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::invMixColumns()
 {
 	int mult = 0;
@@ -523,6 +708,15 @@ void AESdata::invMixColumns()
 	return;
 }
 
+ /*
+  * Function: void AESdata::invAddRoundKey()
+  * 
+  * Purpose: Bitwise XOR round key with the state block starting from end of expanded key
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::invAddRoundKey()
 {
 	int i = roundKeyIndex - 4;
@@ -533,6 +727,15 @@ void AESdata::invAddRoundKey()
 	return;
 }
 
+ /*
+  * Function: void AESdata::popKeyBlock()
+  * 
+  * Purpose: Populate the key block with the user-defined key
+  * 
+  * Arguments: None
+  * 
+  * Returns: Nothing
+  */
 void AESdata::popKeyBlock()
 {
 	unsigned int i = 0;
@@ -542,6 +745,15 @@ void AESdata::popKeyBlock()
 			roundKeys[y][x] = key[i];
 }
 
+ /*
+  * Function: void AESdata::popStateBlock(std::string data)
+  * 
+  * Purpose: Populate the state block with the current data partition to be encrypted
+  * 
+  * Arguments: std::string data = data to be encrypted
+  * 
+  * Returns: Nothing
+  */
 void AESdata::popStateBlock(std::string data)
 {
 	unsigned int i = 0;
@@ -550,6 +762,15 @@ void AESdata::popStateBlock(std::string data)
 			stateBlock[y][x] = data[i];
 }
 
+ /*
+  * Function: void AESdata::popStateBlock(ustring data)
+  * 
+  * Purpose: Populate the state block with the current data partition to be decrypted
+  * 
+  * Arguments: ustring data = data to be decrypted
+  * 
+  * Returns: Nothing
+  */
 void AESdata::popStateBlock(ustring data)
 {
 	unsigned int i = 0;
