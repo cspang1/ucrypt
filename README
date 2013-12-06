@@ -1,6 +1,6 @@
 AES/RSA Encrypter/Decrypter (ucrypt)
 
-Contributors: cspang1, colinj5, mdorfer
+contributors: cspang1, colinj5, mdorfer
 url: https://github.com/cspang1/ucrypt
 
 required libraries: Hashlib++ (http://hashlib2plus.sourceforge.net/), GNU GMP (http://gmplib.org/)
