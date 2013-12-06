@@ -15,7 +15,6 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <iostream>
 #include "AEScrypt.h"
 
  /*
@@ -179,7 +178,7 @@ class AESdata
 		};
 		// AES functions
 		void eProcess();
-		void dProcess();
+		void dProcess(bool padded);
 		void expandKey();
 		void subBytes();
 		void shiftRows();
@@ -266,13 +265,14 @@ ustring AEScrypt::encrypt(std::string in)
 {
 	AES->result.clear();
 	int index = 0;
-	if(in.length() <= 16)
+	if(in.length() <= 16) // Fix padding here
 	{
 		std::string data;
 		for(unsigned int i = 0; i < in.length(); i++)
-			data += in[i];
+			data.push_back(in[i]);
+		unsigned int pad = 16 - in.length();
 		for(unsigned int i = in.length(); i < 16; i++)
-			data += (char)NULL;
+			data.push_back((char)pad);
 		AES->popStateBlock(data);
 		AES->eProcess();
 	}
@@ -293,7 +293,7 @@ ustring AEScrypt::encrypt(std::string in)
 			for(int x = 0; x < empty; x++, index++)
 				data.push_back(in[index]);
 			for(int fill = 0; fill < 16 - empty; fill++)
-				data.push_back((char)NULL);
+				data.push_back((unsigned)(16-empty));
 			AES->popStateBlock(data);
 			AES->eProcess();
 		}
@@ -335,38 +335,18 @@ ustring AEScrypt::decrypt(std::ifstream& in)
 ustring AEScrypt::decrypt(ustring in)
 {
 	AES->result.clear();
-	int index = 0;
-	if(in.length() <= 16)
+	int index = 0;	
+	unsigned int nStates = in.length()/16;
+	for(unsigned int x = 0; x < nStates; x++)
 	{
 		ustring data;
-		for(unsigned int i = 0; i < in.length(); i++)
-			data.push_back(in[i]);
-		for(unsigned int i = in.length(); i < 16; i++)
-			data.push_back((char)NULL);
+		for(int i = 0; i < 16; i++, index++)
+			data.push_back(in[index]);
 		AES->popStateBlock(data);
-		AES->dProcess();
-	}
-	else
-	{
-		for(unsigned int x = 0; x < in.length()/16; x++)
-		{
-			ustring data;
-			for(int i = 0; i < 16; i++, index++)
-				data.push_back(in[index]);
-			AES->popStateBlock(data);
-			AES->dProcess();
-		}
-		ustring data;
-		int empty = in.length()%16;
-		if(empty)
-		{
-			for(int x = 0; x < empty; x++, index++)
-				data.push_back(in[index]);
-			for(int fill = 0; fill < 16 - empty; fill++)
-				data.push_back((char)NULL);
-			AES->popStateBlock(data);
-			AES->dProcess();
-		}
+		if(x == nStates - 1)
+			AES->dProcess(true);
+		else
+			AES->dProcess(false);
 	}
 	return AES->result;
 }
@@ -437,10 +417,11 @@ void AESdata::eProcess()
   * 
   * Returns: Nothing
   */
-void AESdata::dProcess()
+void AESdata::dProcess(bool padded)
 {
 	roundKeyIndex = 44;
 	invAddRoundKey();
+	unsigned int index = 0;
 	for(int round = 0; round < 10; round++)
 	{
 		invShiftRows();
@@ -449,10 +430,22 @@ void AESdata::dProcess()
 		if(round < 9)
 			invMixColumns();
 	}
+	unsigned int pad = stateBlock[WORD_SIZE-1][WORD_SIZE-1];
+	unsigned char last = stateBlock[WORD_SIZE-1][WORD_SIZE-1];
+	bool isPadded = true;
+	unsigned int padding = 16 - pad;
 	for(unsigned int x = 0; x < WORD_SIZE; x++)
-		for(unsigned int y = 0; y < WORD_SIZE; y++)
-			if((unsigned)stateBlock[y][x] != (unsigned)NULL)
+		for(unsigned int y = 0; y < WORD_SIZE; y++, index++)
+			if((index >= padding) && (stateBlock[y][x] != last))
+				isPadded = false;
+	index = 0;
+	for(unsigned int x = 0; x < WORD_SIZE; x++)
+		for(unsigned int y = 0; y < WORD_SIZE; y++, index++)
+		{
+			if(isPadded && padded && (index >= padding)){}
+			else 
 				result.push_back((unsigned)stateBlock[y][x]);
+		}
 	return;
 }
 
