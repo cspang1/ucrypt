@@ -31,15 +31,12 @@ class B64coder
 		char* encode(char* key);
 		char* decode(char* key);
 		// Functions for encoding
-		string DecimalToBinary(int number);
-                string To8Binary(char* key);
-                vector<int> Bit6ToDec(string bin8);
+		std::string DecimalToBinary(int number);
+                std::string To8Binary(char* key);
                 // Functions for decoding
-                vector<int> KeyToDecimal(char* key);
-                int cypherIndex(char key);
+                std::vector<int> KeyToDecimal(char* key);
                 int findSize(char* key);
-                string DecToBin6(vector<int> decimals);
-                vector<int> BinaryToKey(string bin6);
+                std::string DecToBin6(std::vector<int> decimals);
 };
 
 #endif
