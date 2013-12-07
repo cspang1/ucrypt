@@ -7,7 +7,7 @@
  * 
  * Authors: Mariah Arndorfer, Connor Spangler
  * 
- * Last modified: 28 NOV 13
+ * Last modified: 6 DEC 13
  * 
  * License: Creative Commons Attribution-NonCommercial 4.0 International License 
  */
@@ -16,9 +16,15 @@
 #include <iostream>
 #include "B64coder.h"
 
+ /*
+  * Class: B64data
+  *
+  * Purpose: contains the private members of class B64coder
+  */
 class B64data
 {
 	public:
+		// B64 constants
 		static const unsigned int CYPHER_SIZE = 65;
 		const char cypher[CYPHER_SIZE] = 
 		{
@@ -27,7 +33,9 @@ class B64data
 			'i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y',
 			'z','0','1','2','3','4','5','6','7','8','9','+','/','='
 		};
+		// 6 bit binary values
 		int Binary6[6] = {32,16,8,4,2,1};
+		// 8 bit binary values
 		int Binary8[8] = {128,64,32,16,8,4,2,1};
 		// B64data Functions
 		int cypherIndex(char value);
@@ -36,16 +44,39 @@ class B64data
         	std::vector<int> BinaryToKey(std::string bin6);
 };
 
+ /*
+  * Constructor: B64coder()
+  *
+  * Purpose: Generate B64coder object
+  *
+  * Arguments: None
+  */
 B64coder::B64coder()
 {
 	B64 = new B64data;
 }
 
+ /*
+  * Constructor: ~B64coder()
+  *
+  * Purpose: Deallocate B64coder and B64data memory
+  *
+  * Arguments: None
+  */
 B64coder::~B64coder()
 {
 	delete B64;
 }
 
+ /*
+  * Constructor: char* B64coder::encode(char* key)
+  *
+  * Purpose: Use Base64 to encode data
+  *
+  * Arguments: char* key = starting address of a char array
+  *
+  * Returns: Result of encoded data
+  */
 char* B64coder::encode(char* key)
 {
 	std::string fullBinary;
@@ -70,6 +101,15 @@ char* B64coder::encode(char* key)
         return fkptr;
 }
 
+ /*
+  * Constructor: char* B64coder::decode(char* key)
+  *
+  * Purpose: Use Base64 to decode data
+  *
+  * Arguments: char* key = starting address of a char array
+  *
+  * Returns: Result of decoded data
+  */
 char* B64coder::decode(char* key)
 {
 	std::vector<int> DecVal = KeyToDecimal(key);
@@ -84,6 +124,15 @@ char* B64coder::decode(char* key)
 }
 
 //--------------Functions for encoding-------------------------------
+ /*
+  * Constructor: std::string B64coder::To8Binary(char* key)
+  *
+  * Purpose: Converts the data to decimal, then to an 8 bit binary string
+  *
+  * Arguments: char* key = starting address of a char array
+  *
+  * Returns: String of 8 bit binary
+  */
 std::string B64coder::To8Binary(char* key)
 {
         std::string binary8;
@@ -104,6 +153,15 @@ std::string B64coder::To8Binary(char* key)
         return binary8;
 }
 
+ /*
+  * Constructor: std::string B64coder::DecimalToBinary(int number)
+  *
+  * Purpose: Converts a decimal number to binary
+  *
+  * Arguments: int number = a decimal number
+  *
+  * Returns: String of the binary representation of a decimal number
+  */
 std::string B64coder::DecimalToBinary(int number)
 {
         if (number == 0) return "0";
@@ -118,6 +176,15 @@ std::string B64coder::DecimalToBinary(int number)
 }
 
 //--------------Functions for decoding-------------------------------
+ /*
+  * Constructor: std::vector<int> B64coder::KeyToDecimal(char* key)
+  *
+  * Purpose: Finds the decimal value for each char in key with respect to cypher
+  *
+  * Arguments: char* key = starting address of a char array
+  *
+  * Returns: std::vector<int> = each int corresponds to a single values decimal value
+  */
 std::vector<int> B64coder::KeyToDecimal(char* key)
 {
         int length = findSize(key);
@@ -132,6 +199,15 @@ std::vector<int> B64coder::KeyToDecimal(char* key)
         return DecCy;
 }
 
+ /*
+  * Constructor: int B64coder::findSize(char* key)
+  *
+  * Purpose: Finds the size without padding "=" of the char arrayed referenced by key 
+  *
+  * Arguments: char* key = starting address of a char array
+  *
+  * Returns: int = the char array size
+  */
 int B64coder::findSize(char* key)
 {
         int size = 0;
@@ -147,6 +223,15 @@ int B64coder::findSize(char* key)
         return size;
 }
 
+ /*
+  * Constructor: std::string B64coder::DecToBin6(std::vector<int> decimals)
+  *
+  * Purpose: Converts each int in the vector to 6 bit binary
+  *
+  * Arguments: std::vector<int> decimals
+  *
+  * Returns: std::string = concatenated string of each 6bit binary value
+  */
 std::string B64coder::DecToBin6(std::vector<int> decimals)
 {
         std::string binary6;
@@ -164,6 +249,15 @@ std::string B64coder::DecToBin6(std::vector<int> decimals)
 }
 
 //--------------Functions for B64data--------------------------------
+ /*
+  * Constructor: int B64data::cypherIndex(char value)
+  *
+  * Purpose: Use cypher to find the index of the inputted value
+  *
+  * Arguments: char value = value being searched for in cypher
+  *
+  * Returns: int = the index value
+  */
 int B64data::cypherIndex(char value)
 {
         int index = 0;
@@ -177,11 +271,29 @@ int B64data::cypherIndex(char value)
         return index;
 }
 
+ /*
+  * Constructor: char B64data::cypherLookup(int index)
+  *
+  * Purpose: Look up a value in cypher
+  *
+  * Arguments: int index = the index of the value being searched for in cypher
+  *
+  * Returns: The char result of the value found
+  */
 char B64data::cypherLookup(int index)
 {
         return cypher[index];
 }
 
+ /*
+  * Constructor: std::vector<int> B64data::Bit6ToDec(std::string bin8)
+  *
+  * Purpose: Convert from 8 bit binary to 6 bit binary, then convert to decimal
+  *
+  * Arguments: std::string bin8 = string of 8 bit binary values
+  *
+  * Returns: vector<int> of the decimal values
+  */
 std::vector<int> B64data::Bit6ToDec(std::string bin8)
 {
         while (bin8.length() % 6 != 0)
@@ -210,6 +322,15 @@ std::vector<int> B64data::Bit6ToDec(std::string bin8)
         return decimal;
 }
 
+ /*
+  * Constructor: vector<int> B64data::BinaryToKey(std::string bin6)
+  *
+  * Purpose: Convert from 6 bit binary to 8 bit binary, then to decimal
+  *
+  * Arguments: std::string bin6 = string of 6 bit binary values
+  *
+  * Returns: vector<int> of decimal values
+  */
 std::vector<int> B64data::BinaryToKey(std::string bin6)
 {
         while( bin6.length() % 8 != 0 )
