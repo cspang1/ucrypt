@@ -7,7 +7,7 @@
  * 
  * Authors: Colin Moore, Connor Spangler
  * 
- * Last modified: 28 NOV 13
+ * Last modified: 09 DEC 13
  * 
  * License: Creative Commons Attribution-NonCommercial 4.0 International License 
  */
@@ -19,6 +19,12 @@
 #include <gmp.h>
 #include <stdio.h>
 
+/*
+ * Class: RSAdata
+ *
+ * Purpose: Contains the private members of class RSAcrypt
+ */
+
 class RSAdata
 {
 	public:
@@ -27,11 +33,26 @@ class RSAdata
 		B64coder B64;
 };
 
+/*
+ * Constructor: RSAcrypt()
+ *
+ * Purpose: Generate blank RSAcrypt object
+ *
+ * Arguments: None
+ */
 RSAcrypt::RSAcrypt()
 {
 	RSA = new RSAdata;
 }
 
+/*
+ * Constructor: RSAcrypt(const char* pubKey, const char* prvKey)
+ * 
+ * Purpose: Generate RSAcrypt object, setting private and public keys
+ *
+ * Arguments: valid public and private keys of the format 
+ *            "Key CommonNumber" where CommonNumber is the product of two primes
+ */
 RSAcrypt::RSAcrypt(const char* pubKey, const char* prvKey)
 {
 	RSA = new RSAdata;
@@ -39,11 +60,27 @@ RSAcrypt::RSAcrypt(const char* pubKey, const char* prvKey)
 	RSA->prvKey = prvKey;
 }
 
+/*
+ * Destructor: ~RSAcrypt()
+ *
+ * Purpose: Deallocates RSAcrypt and RSAdata memory
+ *
+ * Arguments: None
+ */
 RSAcrypt::~RSAcrypt()
 {
 	delete RSA;
 }
 
+/*
+ * Function: char* RSAcrypt::encrypt(char* data)
+ *
+ * Purpose: Encrypt the data by character
+ *
+ * Arguments: char* data = data to be encrypted
+ *
+ * Returns: char* containing encrypted data
+ */
 char* RSAcrypt::encrypt(char* data)
 {
 	std::string key = RSA->pubKey;
@@ -71,6 +108,15 @@ char* RSAcrypt::encrypt(char* data)
 	return data;
 }
 
+/*
+ * Function: char* RSAcrypt::decrypt(char* data)
+ *
+ * Purpose: decrypt data using current public and private keys
+ *
+ * Argumets: char* data = data to be decrypted
+ *
+ * Returns: char* containing decrypted data
+ */
 char* RSAcrypt::decrypt(char* data)
 {
 	std::string key = RSA->prvKey;
@@ -98,12 +144,27 @@ char* RSAcrypt::decrypt(char* data)
         return data;
 }
 
+/*
+ * Function: void RSAcrypt::setKeys(const char* pubKey, const char* prvKey)
+ *
+ * Purpose: Sets public and private keys for RSAcrypt class
+ *
+ * Arguments: valid public and private keys of the format 
+ *            "Key CommonNumber" where CommonNumber is the product of two primes
+ */
 void RSAcrypt::setKeys(const char* pubKey, const char* prvKey)
 {
 	RSA->pubKey = pubKey;
 	RSA->prvKey = prvKey;
 }
 
+/*
+ * Function: void RSAcrypt::genKeys()
+ *
+ * Purpose:generates public and private keys for RSAcrypt class
+ *
+ * Arguments: None
+ */
 void RSAcrypt::genKeys()
 {
 	std::string pub, prv, R, q, p; //q is private p is public R is commonality
@@ -145,17 +206,44 @@ void RSAcrypt::genKeys()
 	RSA->pubKey = pub;
 	RSA->prvKey = prv;	
 }	
-	
+
+/*
+ * Function: const char* RSAcrypt::getPubKey()
+ *
+ * Purpose: Returns currently stored RSAcrypt public key
+ *
+ * Arguments: None
+ *
+ * Returns: const char* containing public key of the format
+ * 	    "publickey CommonKey" where CommonKey is the product of two primes
+ */	
 const char* RSAcrypt::getPubKey()
 {
 	return RSA->pubKey;
 }
 
+/*
+ * Function: const char* RSAcrypt::getPrvKey()
+ *
+ * Purpose: Returns currently stored RSAcrypt pprivate key
+ *
+ * Arguments: None
+ *
+ * Returns: const char* containing private key of the format
+ *          "privatekey CommonKey" where CommonKey is the product of two primes
+ */  
 const char* RSAcrypt::getPrvKey()
 {
 	return RSA->prvKey;
 }
 
+/*
+ * Function: generatePrime(mpz_t op)
+ *
+ * Prupose: generate a prime number and store it in op
+ *
+ * Arguments: mpz_t op = a gmp library data type to hold the prime
+ */
 void generatePrime(mpz_t op) {
         unsigned long n = 64;
 	mpz_t rop;
@@ -171,6 +259,15 @@ void generatePrime(mpz_t op) {
 	gmp_randclear(state);
 }
 
+/*
+ * Function: bool isPrime(const mpz_t n)
+ *
+ * Purpose: return true if gmp library integer is prime
+ *
+ * Arguments: const mpz_t n = gmp library integer to be checked if prime
+ *
+ * Returns: true if prime false if not prime
+ */
 bool isPrime(const mpz_t n) {
         bool prime = false;
         int x = mpz_probab_prime_p( n, 25);
@@ -180,7 +277,14 @@ bool isPrime(const mpz_t n) {
         return prime;
 }
 
-
+/*
+ * Function: totient( mpz_t result, mpz_t n)
+ *
+ * Prupose: returns euler's totient function falue for the given number
+ *
+ * Arguments: mpz_t result = the result of euler's totient function of mpz_t n
+ * 	      mpz_t n = number to perform euler's totient function on.
+ */
 void totient(mpz_t result, mpz_t n) {
         unsigned long phi = 1, p, x;
         char *str;
@@ -205,7 +309,15 @@ void totient(mpz_t result, mpz_t n) {
                 mpz_set_ui( result, phi * (x - 1));
 }
 
-
+/*
+ * Function: unsigned long totient( unsigned long n)
+ *
+ * Prupose: returns euler's totient function falue for the given number
+ *
+ * Arguments: unsigned long n = performs euler's totient function on this
+ *
+ * Returns: unsigned long containing the results
+ */
 unsigned long totient(unsigned long n) {
 
         unsigned long phi = 1, p;
