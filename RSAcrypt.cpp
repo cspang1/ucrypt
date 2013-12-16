@@ -19,6 +19,12 @@
 #include <gmp.h>
 #include <stdio.h>
 
+unsigned long totient(unsigned long n);
+void totient(mpz_t result, mpz_t n);
+bool isPrime(const mpz_t n);
+void generatePrime(mpz_t op);
+
+
 /*
  * Class: RSAdata
  *
@@ -167,7 +173,7 @@ void RSAcrypt::setKeys(const char* pubKey, const char* prvKey)
  */
 void RSAcrypt::genKeys()
 {
-	std::string pub, prv, R, q, p; //q is private p is public R is commonality
+	char R[] = "", q[] = "", p[] = "", prv[] = "", pub[] = "";
 	mpz_t x;
 	mpz_t y;
 	mpz_t m;
@@ -194,7 +200,7 @@ void RSAcrypt::genKeys()
 		{
 			mpz_mul_ui(y,k,z);
 	                mpz_add_ui(y,y,1);
-			mpz_divexact(y,y,x)
+			mpz_divexact(y,y,x);
 		}
 		//if Z*K +1 mod x = 0
 		//q = (Z*k +1)/x
@@ -247,15 +253,12 @@ const char* RSAcrypt::getPrvKey()
 void generatePrime(mpz_t op) {
         unsigned long n = 64;
 	mpz_t rop;
-	mpz_t op;
 	mpz_init (rop);
-	mpz_init (op);
 	gmp_randstate_t state;
         gmp_randinit_default(state); //initialize state
         mpz_urandomb(rop, state, n); //n using mp_bitcnt_t
         mpz_nextprime( op, rop);
 	mpz_clear(rop);
-	mpz_clear(op);
 	gmp_randclear(state);
 }
 
@@ -287,7 +290,7 @@ bool isPrime(const mpz_t n) {
  */
 void totient(mpz_t result, mpz_t n) {
         unsigned long phi = 1, p, x;
-        char *str;
+        char str[] = "12344668890";
         x = strtoul( mpz_get_str( str, 10, n), NULL, 10);
         for (p = 2; p * p <= x; p += 2) {
                 if (x % p == 0) {
