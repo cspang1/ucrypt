@@ -19,7 +19,7 @@ RSA key pair will be generated automatically if none exists.
 The AES key will be stored in 'Encrypted/FILEKey.xml' if -r is used.
 The RSA key pair will be stored in'RSA/RSAPub' and 'RSA/RSAPrv'.
 If RSA key decrypt is used, KEY will be a file containing the AES key.
-Example: AEScrypt -q -e secrets.txt password123
+Example: AEScrypt -q -d secrets.txt password123
 
 Cryptographical control:
  -d                Decrypt AES encrypted FILE
