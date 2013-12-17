@@ -7,7 +7,7 @@
  * 
  * Authors: Colin Moore, Connor Spangler
  * 
- * Last modified: 09 DEC 13
+ * Last modified: 16 DEC 13
  * 
  * License: Creative Commons Attribution-NonCommercial 4.0 International License 
  */
@@ -15,9 +15,12 @@
 #include <string>
 #include <sstream>
 #include "RSAcrypt.h"
-#include "B64coder.h"
 #include <gmp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+
+using namespace std;
 
 unsigned long totient(unsigned long n);
 void totient(mpz_t result, mpz_t n);
@@ -34,9 +37,8 @@ void generatePrime(mpz_t op);
 class RSAdata
 {
 	public:
-		const char* pubKey;
-		const char* prvKey;
-		B64coder B64;
+		char* pubKey;
+		char* prvKey;
 };
 
 /*
@@ -59,7 +61,7 @@ RSAcrypt::RSAcrypt()
  * Arguments: valid public and private keys of the format 
  *            "Key CommonNumber" where CommonNumber is the product of two primes
  */
-RSAcrypt::RSAcrypt(const char* pubKey, const char* prvKey)
+RSAcrypt::RSAcrypt( char* pubKey,  char* prvKey)
 {
 	RSA = new RSAdata;
 	RSA->pubKey = pubKey;
@@ -79,18 +81,21 @@ RSAcrypt::~RSAcrypt()
 }
 
 /*
- * Function: char* RSAcrypt::encrypt(char* data)
+ * Function: string RSAcrypt::encrypt(string data)
  *
  * Purpose: Encrypt the data by character
  *
- * Arguments: char* data = data to be encrypted
+ * Arguments: string data = data to be encrypted
  *
- * Returns: char* containing encrypted data
+ * Returns: string containing encrypted data
  */
-char* RSAcrypt::encrypt(char* data)
+string RSAcrypt::encrypt(string data)
 {
 	std::string key = RSA->pubKey;
-	char *D;
+	char y[data.size()];
+	for (int i = 0; data[i] != '\0'; i++) {
+		y[i] = data[i];
+	}
 	unsigned long int exp, temp;
 	std::istringstream ss(key);
 	mpz_t base;
@@ -100,22 +105,23 @@ char* RSAcrypt::encrypt(char* data)
 	mpz_init(rop);
 	ss>>exp>>temp;
 	mpz_init_set_ui(mod, temp);
-	for(unsigned int x = 0; x < (16/sizeof(char)); x++)
-	{
-		*D = data[x];
-		mpz_set_str( base, D, 10);
+	char D, *iop;
+	for(unsigned int x = 0; data[x]!='\0'; x++) {
+		*iop = data[x];
+		mpz_set_str( base, iop, 10);
 		mpz_powm_ui( rop, base, exp, mod);
-		D = mpz_get_str( D, 10, rop);
-		data[x] = *D; 
+		mpz_get_str( iop, 10, rop); 
+		y[x] = *iop;
 	}
 	mpz_clear(base);
 	mpz_clear(rop);
-	mpz_clear(mod);	
-	return data;
+	mpz_clear(mod);
+	string Walmart = y;
+	return Walmart;
 }
 
 /*
- * Function: char* RSAcrypt::decrypt(char* data)
+ * Function: string RSAcrypt::decrypt(string data)
  *
  * Purpose: decrypt data using current public and private keys
  *
@@ -123,7 +129,7 @@ char* RSAcrypt::encrypt(char* data)
  *
  * Returns: char* containing decrypted data
  */
-char* RSAcrypt::decrypt(char* data)
+string RSAcrypt::decrypt(string data)
 {
 	std::string key = RSA->prvKey;
         char *D;
@@ -158,7 +164,7 @@ char* RSAcrypt::decrypt(char* data)
  * Arguments: valid public and private keys of the format 
  *            "Key CommonNumber" where CommonNumber is the product of two primes
  */
-void RSAcrypt::setKeys(const char* pubKey, const char* prvKey)
+void RSAcrypt::setKeys( char* pubKey, char* prvKey)
 {
 	RSA->pubKey = pubKey;
 	RSA->prvKey = prvKey;
@@ -173,7 +179,8 @@ void RSAcrypt::setKeys(const char* pubKey, const char* prvKey)
  */
 void RSAcrypt::genKeys()
 {
-	char R[] = "", q[] = "", p[] = "", prv[] = "", pub[] = "";
+	char R[] = "12347890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", q[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", p[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", prv[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", pub[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
+	unsigned int Tx = 7;
 	mpz_t x;
 	mpz_t y;
 	mpz_t m;
@@ -184,33 +191,32 @@ void RSAcrypt::genKeys()
 	mpz_init(k);
 	generatePrime(x);
 	generatePrime(y);
-	mpz_mul(m,y,x); //multiplies y*x and stores it in x
+	mpz_mul(m,y,x); //multiplies y*x and stores it in m
 	mpz_get_str(R, 10, m);
-
-	totient(k, m);
-	generatePrime(x);
-	while (mpz_cmp(x , k) >= 0)
-		generatePrime(x);	
-	for (unsigned int z = 1; mpz_cmp_ui(k,z) < 0; z++)
-	{
+	totient(k, m);	
+	mpz_set_ui(x,Tx);
+	mpz_get_str(p, 10, x);
+	for (unsigned int z = 1; mpz_cmp_ui(m,z) >  0; z++) {
 		mpz_mul_ui(y,k,z);
 		mpz_add_ui(y,y,1);
 		mpz_mod(y,y,x);
-		if (mpz_sgn(y) == 0)
-		{
+		if (mpz_sgn(y) == 0) {
 			mpz_mul_ui(y,k,z);
 	                mpz_add_ui(y,y,1);
 			mpz_divexact(y,y,x);
+			break;
 		}
 		//if Z*K +1 mod x = 0
 		//q = (Z*k +1)/x
 	}
-	mpz_get_str(p,10,x);
 	mpz_get_str(q,10,y);
+	mpz_clear(x);
+	mpz_clear(y);
+	mpz_clear(m);
+	mpz_clear(k);
 	sprintf(pub, "%s %s", p, R);
 	sprintf(prv, "%s %s", q, R);
-	RSA->pubKey = pub;
-	RSA->prvKey = prv;	
+	setKeys( pub, prv);
 }	
 
 /*

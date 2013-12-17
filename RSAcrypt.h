@@ -24,13 +24,13 @@ class RSAcrypt
 	private:
 		RSAdata *RSA;
 	public:
-		RSAcrypt(const char* pubKey, const char* prvKey);
+		RSAcrypt( char* pubKey,  char* prvKey);
 		RSAcrypt();
 		~RSAcrypt();
-		char* encrypt(char* data);
-		char* decrypt(char* data);
+		std::string encrypt(std::string data);
+		std::string decrypt(std::string data);
 		void genKeys();
-		void setKeys(const char* pubKey, const char* prvKey);
+		void setKeys( char* pubKey, char* prvKey);
 		const char* getPubKey();
 		const char* getPrvKey();
 };
