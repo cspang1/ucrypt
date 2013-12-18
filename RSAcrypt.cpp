@@ -13,12 +13,14 @@
  */
 
 #include <string>
+#include <cstring>
 #include <sstream>
 #include "RSAcrypt.h"
 #include <gmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <inttypes.h>
 
 using namespace std;
 
@@ -37,8 +39,8 @@ void generatePrime(mpz_t op);
 class RSAdata
 {
 	public:
-		char* pubKey;
-		char* prvKey;
+		char* pubKey = new char [100];
+		char* prvKey = new char [100];
 };
 
 /*
@@ -78,82 +80,117 @@ RSAcrypt::RSAcrypt( char* pubKey,  char* prvKey)
 RSAcrypt::~RSAcrypt()
 {
 	delete RSA;
+
 }
 
 /*
- * Function: string RSAcrypt::encrypt(string data)
+ * Function: char* RSAcrypt::encrypt(char* data)
  *
  * Purpose: Encrypt the data by character
  *
- * Arguments: string data = data to be encrypted
+ * Arguments: char* data = data to be encrypted
  *
- * Returns: string containing encrypted data
+ * Returns: char* containing encrypted data
  */
 string RSAcrypt::encrypt(string data)
 {
 	std::string key = RSA->pubKey;
-	char y[data.size()];
-	for (int i = 0; data[i] != '\0'; i++) {
-		y[i] = data[i];
-	}
 	unsigned long int exp, temp;
 	std::istringstream ss(key);
 	mpz_t base;
+
 	mpz_init(base);
 	mpz_t mod;
+	mpz_init(mod);
  	mpz_t rop;
 	mpz_init(rop);
 	ss>>exp>>temp;
-	mpz_init_set_ui(mod, temp);
-	char D, *iop;
-	for(unsigned int x = 0; data[x]!='\0'; x++) {
-		*iop = data[x];
-		mpz_set_str( base, iop, 10);
+	mpz_set_ui(mod, temp);
+	unsigned int fox;
+	char *P = new char [12], *D = new char [1], *iop = new char [data.length()];
+	std::strcpy(iop, data.c_str());
+	unsigned int Madness[200];
+	unsigned int mCount = 0;
+	for(unsigned int x = 0; iop[x]!='\0'; x++) {
+		*D = iop[x];
+		fox = *D;
+		sprintf(P, "%d" , fox);	
+		mpz_set_str( base,  P, 10);
 		mpz_powm_ui( rop, base, exp, mod);
-		mpz_get_str( iop, 10, rop); 
-		y[x] = *iop;
+		mpz_get_str( P, 10, rop);
+		fox = atoi(P);
+		*D =(char) fox;
+		Madness[x] = fox;
+		mCount++;
 	}
 	mpz_clear(base);
 	mpz_clear(rop);
 	mpz_clear(mod);
-	string Walmart = y;
+	unsigned int k = 0;
+	char * tAdder = new char [500];
+	while(k < mCount) {
+		sprintf(tAdder, "%s %d", tAdder, Madness[k]);
+		k++;
+	}
+	string Walmart = tAdder;
+	cout<<tAdder<<endl;
+	delete [] iop;
+	delete [] P;
+	delete [] D;
+	delete [] tAdder;
 	return Walmart;
 }
 
 /*
- * Function: string RSAcrypt::decrypt(string data)
+ * Function: std::string RSAcrypt::decrypt(std::string data)
  *
  * Purpose: decrypt data using current public and private keys
  *
- * Argumets: char* data = data to be decrypted
+ * Argumets: string data = data to be decrypted
  *
- * Returns: char* containing decrypted data
+ * Returns: string containing decrypted data
  */
-string RSAcrypt::decrypt(string data)
+std::string RSAcrypt::decrypt(std::string data)
 {
 	std::string key = RSA->prvKey;
-        char *D;
         unsigned long int exp, temp;
-        std::istringstream ss(key);
-        mpz_t base;
-        mpz_init(base);
-        mpz_t mod;
-        mpz_t rop;
-        mpz_init(rop);
-        ss>>exp>>temp;
-        mpz_init_set_ui(mod, temp);
-        for(unsigned int x = 0; x < (16/sizeof(char)); x++)
-        {
-                *D = data[x];
-                mpz_set_str( base, D, 10);
-                mpz_powm_ui( rop, base, exp, mod);
-                D = mpz_get_str( D, 10, rop);
-                data[x] = *D;
-        }
-        mpz_clear(base);
-        mpz_clear(rop);
-        mpz_clear(mod);
-        return data;
+	std::istringstream ss(key);
+	std::istringstream ss2(data);
+	unsigned int Madness[200];
+	unsigned int k = 0;
+	while (!ss2.fail()) {
+		ss2>>Madness[k];
+		k++;
+	}
+	mpz_t base;
+	mpz_init(base);
+	mpz_t mod;
+	mpz_init(mod);
+ 	mpz_t rop;
+	mpz_init(rop);
+	ss>>exp>>temp;
+	mpz_set_ui(mod, temp);
+	unsigned int fox;
+	char *P = new char [12], *D = new char [1], *iop = new char [data.length()];
+	for(unsigned int x = 0; x<k; x++) {
+		fox = Madness[x];
+		sprintf(P, "%d" , fox);	
+		mpz_set_str( base,  P, 10);
+		mpz_powm_ui( rop, base, exp, mod);
+		mpz_get_str( P, 10, rop);
+		fox = atoi(P);
+		*D =(char) fox;
+		iop[x] = *D;
+
+	}
+	mpz_clear(base);
+	mpz_clear(rop);
+	mpz_clear(mod);
+	string Walmart = iop;
+	delete [] iop;
+	delete [] P;
+	delete [] D;
+	return Walmart;
 }
 
 /*
@@ -166,8 +203,12 @@ string RSAcrypt::decrypt(string data)
  */
 void RSAcrypt::setKeys( char* pubKey, char* prvKey)
 {
-	RSA->pubKey = pubKey;
-	RSA->prvKey = prvKey;
+	char* key = new char[100];
+	char* key2 = new char[100];
+	std::strcpy(key, pubKey);
+	RSA->pubKey = key;
+	std::strcpy(key2, prvKey);
+	RSA->prvKey = key2;
 }
 
 /*
@@ -179,7 +220,7 @@ void RSAcrypt::setKeys( char* pubKey, char* prvKey)
  */
 void RSAcrypt::genKeys()
 {
-	char R[] = "12347890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", q[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", p[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", prv[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", pub[] = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
+	char R[100], q[100], p[100], prv[200], pub[200];
 	unsigned int Tx = 7;
 	mpz_t x;
 	mpz_t y;
@@ -204,7 +245,8 @@ void RSAcrypt::genKeys()
 			mpz_mul_ui(y,k,z);
 	                mpz_add_ui(y,y,1);
 			mpz_divexact(y,y,x);
-			break;
+			if (mpz_cmp_ui(y,1) !=0)
+				break;
 		}
 		//if Z*K +1 mod x = 0
 		//q = (Z*k +1)/x
@@ -257,7 +299,7 @@ const char* RSAcrypt::getPrvKey()
  * Arguments: mpz_t op = a gmp library data type to hold the prime
  */
 void generatePrime(mpz_t op) {
-        unsigned long n = 64;
+        unsigned long n = 5;
 	mpz_t rop;
 	mpz_init (rop);
 	gmp_randstate_t state;
