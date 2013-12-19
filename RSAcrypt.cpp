@@ -40,8 +40,8 @@ void generatePrime(mpz_t op);
 class RSAdata
 {
 	public:
-		char* pubKey;// = new char [100];
-		char* prvKey;// = new char [100];
+		char* pubKey;
+		char* prvKey;
 };
 
 /*
@@ -82,7 +82,7 @@ RSAcrypt::RSAcrypt( char* pubKey,  char* prvKey)
  */
 RSAcrypt::~RSAcrypt()
 {
-	delete RSA;
+	delete [] RSA;
 
 }
 
@@ -115,13 +115,12 @@ std::string RSAcrypt::encrypt(std::string data)
 	}
 
 	for (unsigned int cpy = 0; cpy<data.size(); cpy++) {
-
 		iop[cpy] = data[cpy];
 	}
 	
 	unsigned int Madness[200];
 	unsigned int mCount = 0;
-	for(unsigned int x = 0; x<data.size()/*iop[x] !='\0'*/; x++) {
+	for(unsigned int x = 0; x<data.size(); x++) {
 		*D = iop[x];
 		fox = *D;
 		sprintf(P, "%d" , fox);	
@@ -129,7 +128,6 @@ std::string RSAcrypt::encrypt(std::string data)
 		mpz_powm_ui( rop, base, exp, mod);
 		mpz_get_str( P, 10, rop);
 		fox = atoi(P);
-		*D =(char) fox;
 		Madness[x] = fox;
 		mCount++;
 	}
@@ -174,6 +172,7 @@ std::string RSAcrypt::decrypt(std::string data)
 	while (!ss2.fail()) {
 		ss2>>Madness[k];
 		k++;
+
 	}
 	mpz_t base;
 	mpz_init(base);
@@ -215,6 +214,8 @@ std::string RSAcrypt::decrypt(std::string data)
  */
 void RSAcrypt::setKeys( char* pubKey, char* prvKey)
 {
+	delete [] RSA->pubKey;
+	delete [] RSA->prvKey;
 	char* key = new char[100];
 	char* key2 = new char[100];
 	std::strcpy(key, pubKey);
@@ -233,7 +234,9 @@ void RSAcrypt::setKeys( char* pubKey, char* prvKey)
 void RSAcrypt::genKeys()
 {
 	char R[100], q[100], p[100], prv[200], pub[200];
-	unsigned int Tx = 11;
+	srand(time(NULL));
+	unsigned int Tx, medamass[5] = {7, 11, 13, 17, 23};
+	Tx = medamass[rand() % 4];
 	mpz_t x;
 	mpz_t y;
 	mpz_t m;
@@ -242,31 +245,35 @@ void RSAcrypt::genKeys()
 	mpz_init(y);
 	mpz_init(m);
 	mpz_init(k);
+	do {
 	generatePrime(x);
 	generatePrime(y);
 	mpz_mul(m,y,x); //multiplies y*x and stores it in m
 	mpz_get_str(R, 10, m);
+	}while(atoi(R)<1000);
 	totient(k, m);	
 	mpz_set_ui(x,Tx);
 	mpz_get_str(p, 10, x);
 	for (unsigned int z = 1; mpz_cmp_ui(m,z) >  0; z++) {
 		mpz_mul_ui(y,k,z);
 		mpz_add_ui(y,y,1);
-		mpz_mod(y,y,x);
-		if (mpz_sgn(y) == 0) {
-			mpz_mul_ui(y,k,z);
-	                mpz_add_ui(y,y,1);
-			mpz_divexact(y,y,x);
-			if (mpz_cmp_ui(y,1) !=0)
+		if (mpz_cmp(x,y) != 0) {
+			mpz_mod(y,y,x);
+			if (mpz_sgn(y) == 0) {
+				mpz_mul_ui(y,k,z);
+		                mpz_add_ui(y,y,1);
+				mpz_divexact(y,y,x);
 				break;
+			}
 		}
 		//if Z*K +1 mod x = 0
 		//q = (Z*k +1)/x
 	}
-	if (*q == '1') {
+	
+	mpz_get_str(q,10,y);
+	if (atoi(q) == 1) {
 		genKeys();
 	}
-	mpz_get_str(q,10,y);
 	mpz_clear(x);
 	mpz_clear(y);
 	mpz_clear(m);
@@ -274,6 +281,48 @@ void RSAcrypt::genKeys()
 	sprintf(pub, "%s %s", p, R);
 	sprintf(prv, "%s %s", q, R);
 	setKeys( pub, prv);
+
+	bool retry = false;
+	unsigned long int j1, k1, l1;
+	j1= atoi(prv);
+	k1 = atoi(pub);
+	l1 = atoi(R);
+	if (j1 == 1 || k1 == 1) {
+		retry = true;
+	}
+
+	mpz_t base;
+	mpz_init(base);
+	mpz_t mod;
+	mpz_init(mod);
+ 	mpz_t rop;
+	mpz_init(rop);
+	mpz_set_ui(mod, l1);
+	unsigned int fox;
+	char *P = new char [12], *D = new char [1], iop[] = "abcdefghijklmnopqrstyvwxyz .ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+	for(unsigned int xa = 0; xa<64; xa++) {
+		*D = iop[xa];
+		fox = *D;
+		sprintf(P, "%d" , fox);	
+		mpz_set_str( base,  P, 10);
+		mpz_powm_ui( rop, base, k1, mod);
+		mpz_get_str( P, 10, rop);
+		fox = atoi(P);
+		if (fox == 0) {
+			retry = true;
+		}
+	}
+	mpz_clear(base);
+	mpz_clear(rop);
+	mpz_clear(mod);
+	delete [] P;
+	delete [] D;
+
+
+	if (retry == true) {
+		genKeys();
+	}
 }	
 
 /*
@@ -305,6 +354,8 @@ const char* RSAcrypt::getPrvKey()
 {
 	return RSA->prvKey;
 }
+
+
 
 /*
  * Function: generatePrime(mpz_t op)
