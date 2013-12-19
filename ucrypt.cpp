@@ -21,7 +21,7 @@
 #include <vector>
 #include <hashlib++/hashlibpp.h>
 #include "AEScrypt.h"
-//#include "RSAcrypt.h"
+#include "RSAcrypt.h"
 
 using namespace std;
 
@@ -30,7 +30,6 @@ int throwError(int e);
 vector<int> validKey(char * key);
 bool genRSAkeys();
 bool keyCheck();
-void dispSpecs();
 
 // AES and RSA key sizes in bytes
 static const unsigned int AES_KEY_SIZE = 16/sizeof(char);
@@ -39,7 +38,7 @@ static const unsigned int RSA_KEY_SIZE = 128/sizeof(char);
 static const char* RSApubKey = new char[RSA_KEY_SIZE];
 static const char* RSAprvKey = new char[RSA_KEY_SIZE];
 // RSA class
-//static RSAcrypt RSA;
+static RSAcrypt RSA;
 
 int main(int argc, char * argv[])
 {
@@ -141,7 +140,7 @@ int main(int argc, char * argv[])
 		RSAprvi.getline(tempPrvKey, 256);
 		RSApubKey = tempPubKey;
 		RSAprvKey = tempPrvKey;
-		//RSA.setKeys(RSApubKey, RSAprvKey);
+		RSA.setKeys(RSApubKey, RSAprvKey);
 		RSApubi.close();
 		RSAprvi.close();
 	}
@@ -158,7 +157,7 @@ int main(int argc, char * argv[])
 			return throwError(-1);
 		}
 		keyFile.getline(RSAkey, 256);
-		//tempKey = RSA.decrypt(RSAkey);
+		tempKey = RSA.decrypt(RSAkey);
 		string temp(tempKey);
 		hash = hasher->getHashFromString(temp.c_str());		
 	}
@@ -244,7 +243,6 @@ int main(int argc, char * argv[])
 		out << encryptedKey;
 		out.close();
 	}
-	dispSpecs();
 	return 0;
 }
  
@@ -259,9 +257,9 @@ int main(int argc, char * argv[])
   */
 bool genRSAkeys()
 {
-	//RSA.genKeys();
-	//RSApubKey = RSA.getPubKey();
-	//RSAprvKey = RSA.getPrvKey();
+	RSA.genKeys();
+	RSApubKey = RSA.getPubKey();
+	RSAprvKey = RSA.getPrvKey();
 	ofstream RSApubo("RSA/RSAPub.txt"); // Change to xml in implementation
 	ofstream RSAprvo("RSA/RSAPrv.txt"); // Change to xml in implementation
 	if(!RSApubo.is_open() || !RSAprvo.is_open())
@@ -366,11 +364,6 @@ int throwError(int e)
 		break;
 	}
 	return e;
-}
-
-void dispSpecs()
-{
-	cout << "SPECS" << endl;
 }
 
  /*
