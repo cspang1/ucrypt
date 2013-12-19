@@ -7,7 +7,7 @@
  * 
  * Authors: Colin Moore, Connor Spangler
  * 
- * Last modified: 19 DEC 13
+ * Last modified: 16 DEC 13
  * 
  * License: Creative Commons Attribution-NonCommercial 4.0 International License 
  */
@@ -21,8 +21,9 @@
 #include <stdlib.h>
 #include <iostream>
 #include <inttypes.h>
-
-//using namespace std;
+#include <time.h>
+//
+using namespace std;
 
 unsigned long totient(unsigned long n);
 void totient(mpz_t result, mpz_t n);
@@ -139,8 +140,8 @@ std::string RSAcrypt::encrypt(std::string data)
 	delete [] iop;
 	delete [] P;
 	delete [] D;
-	char * tAdder = new char [5000];
-	for (int i = 0; i<5000; i++) {
+	char * tAdder = new char [2000];
+	for (unsigned int i = 0; i<(2000); i++) {
 		tAdder[i] = '\0';
 	}
 	while(k < mCount) {
@@ -192,12 +193,11 @@ std::string RSAcrypt::decrypt(std::string data)
 		mpz_get_str( P, 10, rop);
 		fox = atoi(P);
 		*D =(char) fox;
-		iop[x] = *D;
-
+		iop[x] = *D; 
 	}
 	mpz_clear(base);
 	mpz_clear(rop);
-	mpz_clear(mod);
+	mpz_clear(mod); 
 	std::string Walmart = iop;
 	delete [] iop;
 	delete [] P;
@@ -263,6 +263,9 @@ void RSAcrypt::genKeys()
 		//if Z*K +1 mod x = 0
 		//q = (Z*k +1)/x
 	}
+	if (*q == '1') {
+		genKeys();
+	}
 	mpz_get_str(q,10,y);
 	mpz_clear(x);
 	mpz_clear(y);
@@ -311,11 +314,13 @@ const char* RSAcrypt::getPrvKey()
  * Arguments: mpz_t op = a gmp library data type to hold the prime
  */
 void generatePrime(mpz_t op) {
-        unsigned long n = 7;
+        srand(time(NULL));
+	unsigned long n = 7;
 	mpz_t rop;
 	mpz_init (rop);
 	gmp_randstate_t state;
         gmp_randinit_default(state); //initialize state
+	gmp_randseed_ui(state, rand());
         mpz_urandomb(rop, state, n); //n using mp_bitcnt_t
         mpz_nextprime( op, rop);
 	mpz_clear(rop);
@@ -350,7 +355,7 @@ bool isPrime(const mpz_t n) {
  */
 void totient(mpz_t result, mpz_t n) {
         unsigned long phi = 1, p, x;
-        char str[] = "12344668890";
+        char str[20];
         x = strtoul( mpz_get_str( str, 10, n), NULL, 10);
         for (p = 2; p * p <= x; p += 2) {
                 if (x % p == 0) {
