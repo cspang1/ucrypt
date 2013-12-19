@@ -1,13 +1,13 @@
 /*
  * File: RSAcrypt.cpp
  * 
- * Dependencies: B64coder
+ * Dependencies: gmp library
  * 
  * Purpose: Provides support for the Rivest Shamir Adleman (RSA) algorithm
  * 
  * Authors: Colin Moore, Connor Spangler
  * 
- * Last modified: 16 DEC 13
+ * Last modified: 19 DEC 13
  * 
  * License: Creative Commons Attribution-NonCommercial 4.0 International License 
  */
@@ -22,7 +22,7 @@
 #include <iostream>
 #include <inttypes.h>
 
-using namespace std;
+//using namespace std;
 
 unsigned long totient(unsigned long n);
 void totient(mpz_t result, mpz_t n);
@@ -39,8 +39,8 @@ void generatePrime(mpz_t op);
 class RSAdata
 {
 	public:
-		char* pubKey = new char [100];
-		char* prvKey = new char [100];
+		char* pubKey;// = new char [100];
+		char* prvKey;// = new char [100];
 };
 
 /*
@@ -53,6 +53,8 @@ class RSAdata
 RSAcrypt::RSAcrypt()
 {
 	RSA = new RSAdata;
+	RSA->pubKey = new char [100];
+	RSA->prvKey = new char [100];
 }
 
 /*
@@ -92,13 +94,12 @@ RSAcrypt::~RSAcrypt()
  *
  * Returns: char* containing encrypted data
  */
-string RSAcrypt::encrypt(string data)
+std::string RSAcrypt::encrypt(std::string data)
 {
 	std::string key = RSA->pubKey;
 	unsigned long int exp, temp;
 	std::istringstream ss(key);
 	mpz_t base;
-
 	mpz_init(base);
 	mpz_t mod;
 	mpz_init(mod);
@@ -107,11 +108,19 @@ string RSAcrypt::encrypt(string data)
 	ss>>exp>>temp;
 	mpz_set_ui(mod, temp);
 	unsigned int fox;
-	char *P = new char [12], *D = new char [1], *iop = new char [data.length()];
-	std::strcpy(iop, data.c_str());
+	char *P = new char [12], *D = new char [1], *iop = new char [data.size()];
+	for (unsigned int rIOP = 0; rIOP<data.size(); rIOP++) {
+		iop[rIOP] = '\0';
+	}
+
+	for (unsigned int cpy = 0; cpy<data.size(); cpy++) {
+
+		iop[cpy] = data[cpy];
+	}
+	
 	unsigned int Madness[200];
 	unsigned int mCount = 0;
-	for(unsigned int x = 0; iop[x]!='\0'; x++) {
+	for(unsigned int x = 0; x<data.size()/*iop[x] !='\0'*/; x++) {
 		*D = iop[x];
 		fox = *D;
 		sprintf(P, "%d" , fox);	
@@ -127,16 +136,19 @@ string RSAcrypt::encrypt(string data)
 	mpz_clear(rop);
 	mpz_clear(mod);
 	unsigned int k = 0;
-	char * tAdder = new char [500];
-	while(k < mCount) {
-		sprintf(tAdder, "%s %d", tAdder, Madness[k]);
-		k++;
-	}
-	string Walmart = tAdder;
-	cout<<tAdder<<endl;
 	delete [] iop;
 	delete [] P;
 	delete [] D;
+	char * tAdder = new char [5000];
+	for (int i = 0; i<5000; i++) {
+		tAdder[i] = '\0';
+	}
+	while(k < mCount) {
+
+		sprintf(tAdder, "%s %d", tAdder, Madness[k]);
+		k++;
+	}
+	std::string Walmart = tAdder;
 	delete [] tAdder;
 	return Walmart;
 }
@@ -172,7 +184,7 @@ std::string RSAcrypt::decrypt(std::string data)
 	mpz_set_ui(mod, temp);
 	unsigned int fox;
 	char *P = new char [12], *D = new char [1], *iop = new char [data.length()];
-	for(unsigned int x = 0; x<k; x++) {
+	for(unsigned int x = 0; x<(k-1); x++) {
 		fox = Madness[x];
 		sprintf(P, "%d" , fox);	
 		mpz_set_str( base,  P, 10);
@@ -186,7 +198,7 @@ std::string RSAcrypt::decrypt(std::string data)
 	mpz_clear(base);
 	mpz_clear(rop);
 	mpz_clear(mod);
-	string Walmart = iop;
+	std::string Walmart = iop;
 	delete [] iop;
 	delete [] P;
 	delete [] D;
@@ -221,7 +233,7 @@ void RSAcrypt::setKeys( char* pubKey, char* prvKey)
 void RSAcrypt::genKeys()
 {
 	char R[100], q[100], p[100], prv[200], pub[200];
-	unsigned int Tx = 7;
+	unsigned int Tx = 11;
 	mpz_t x;
 	mpz_t y;
 	mpz_t m;
@@ -299,7 +311,7 @@ const char* RSAcrypt::getPrvKey()
  * Arguments: mpz_t op = a gmp library data type to hold the prime
  */
 void generatePrime(mpz_t op) {
-        unsigned long n = 5;
+        unsigned long n = 7;
 	mpz_t rop;
 	mpz_init (rop);
 	gmp_randstate_t state;
