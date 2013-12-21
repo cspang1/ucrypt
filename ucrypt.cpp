@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <vector>
-#include <hashlibpp.h>
+#include <hashlib++/hashlibpp.h>
 #include "AEScrypt.h"
 //#include "RSAcrypt.h"
 
